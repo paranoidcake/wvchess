@@ -1,4 +1,6 @@
-# coderdojo-meetings
+# webview-preact
+
+This project was copied from my [coderdojo-meetings](https://github.com/paranoidcake/coderdojo-meetings) repository to provide a baseline / template for new projects using Preact and Webview on Rust
 
 ## Development Setup
 
@@ -17,5 +19,5 @@ This will generate TS types from Rust types for you, and helps with [RLS](https:
 ## Distribution
 
   - See the [WebView README](https://github.com/Boscop/web-view/blob/master/README.md) for details on platforms
-  - Compiles to `target/coderdojo-meetings` on Linux, which can be distributed standalone
+  - Compiles to `target/webview-preact` on Linux, which can be distributed standalone
   - Additional steps are required for Windows and MacOS

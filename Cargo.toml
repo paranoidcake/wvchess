@@ -1,5 +1,5 @@
 [package]
-name = "coderdojo-meetings"
+name = "webview-preact"
 version = "0.1.0"
 authors = ["paranoidcake <victorpanayotov@gmail.com>"]
 edition = "2018"
