@@ -1,25 +1,38 @@
 extern crate web_view;
 extern crate types;
-use web_view::*;
+use web_view::{Content, WebView};
+use warp::Filter;
 
 fn main() {
     let html_content = include_str!("../dist/bundle.html");
+
     let mut rt = tokio::runtime::Runtime::new().unwrap();
 
+    // let hello = warp::path!("hello" / String);
+    
+    let route = warp::path("assets")
+        .and(warp::fs::dir( std::fs::canonicalize(std::path::PathBuf::from("./assets")).unwrap() )).map(|file| {
+            warp::reply::with_header(file, "Access-Control-Allow-Origin", "*")
+        });
+
     rt.block_on(async {
+        tokio::spawn(async move {
+            println!("Listening on 127.0.0.1:5673...");
+            warp::serve(route).run(([127, 0, 0, 1], 5673)).await;
+        });
+
         web_view::builder()
-        .title("My Project")
-        .content(Content::Html(html_content))
-        .size(320, 480)
-        .resizable(false)
-        .debug(true)
-        .user_data(())
-        .invoke_handler(|webview: &mut WebView<()>, arg: &str| {
-            handle_message(webview.handle(), arg.to_string());
-            Ok(())
-        })
-        .run()
-        .unwrap();
+            .title("My Project")
+            .content(Content::Html(html_content))
+            .resizable(true)
+            .debug(true)
+            .user_data(())
+            .invoke_handler(|webview: &mut WebView<()>, arg: &str| {
+                handle_message(webview.handle(), arg.to_string());
+                Ok(())
+            })
+            .run()
+            .unwrap();
     });
 }
 
@@ -39,7 +52,7 @@ pub struct Message<T> {
 fn handle_message<
     // OUT: DeserializeOwned + Serialize + Send,
     // H: Fn(Request) -> std::option::Option<OUT> + Send
->(handle: Handle<()>, arg: String, /* handler: H */) {
+>(handle: web_view::Handle<()>, arg: String, /* handler: H */) {
     tokio::spawn(
         async move {
             let recieved: Message<types::webview::Request> = serde_json::from_str(&arg).unwrap();
