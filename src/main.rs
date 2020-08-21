@@ -23,28 +23,63 @@ fn main() {
             warp::serve(route).run(([127, 0, 0, 1], 5673)).await;
         });
 
-        web_view::builder()
-            .title("My Project")
-            .content(Content::Html(html_content))
-            .resizable(true)
-            .debug(true)
-            .user_data(())
-            .invoke_handler(|webview: &mut WebView<()>, arg: &str| {
-                handle_message(webview.handle(), arg.to_string());
-                Ok(())
-            })
-            .run()
-            .unwrap();
+        tokio::spawn(
+            async move {
+                web_view::builder()
+                    .title("My Project")
+                    .content(Content::Html(html_content))
+                    .resizable(true)
+                    .debug(true)
+                    .user_data(())
+                    .invoke_handler(|webview: &mut WebView<()>, arg: &str| {
+                        handle_message(webview.handle(), arg.to_string(), |request| {
+                            use types::webview::Request::*;
+                            use types::webview::*;
+                    
+                            match &request {
+                                Init => {
+                                    None
+                                }
+                                Log { text } => {
+                                    println!("{}", text);
+                                    None
+                                }
+                                Increment { number } => {
+                                    Some(Return::Increment {
+                                        number: *number + 1
+                                    })
+                                }
+                                DelayedIncrement { number } => {
+                                    std::thread::sleep(std::time::Duration::from_millis(1000));
+                                    Some(Return::DelayedIncrement {
+                                        number: *number + 1
+                                    })
+                                }
+                                ToUpperCase { text } => {
+                                    let text: &String = text;
+                                    Some(Return::ToUpperCase {
+                                        text: text.to_string().to_ascii_uppercase()
+                                    })
+                                }
+                                Test => {
+                                    None
+                                }
+                            }
+                        });
+                        Ok(())
+                    })
+                    .run()
+                    .unwrap();
+            }
+        );
     });
 }
 
 extern crate serde_json;
 extern crate serde_derive;
 use serde_derive::*;
-// use serde::Serialize;
-// use serde::de::DeserializeOwned;
 
-#[derive(Serialize, Deserialize, std::fmt::Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Message<T> {
     subscription_id: String,
     message_id: String,
@@ -52,71 +87,31 @@ pub struct Message<T> {
 }
 
 fn handle_message<
-    // OUT: DeserializeOwned + Serialize + Send,
-    // H: Fn(Request) -> std::option::Option<OUT> + Send
->(handle: web_view::Handle<()>, arg: String, /* handler: H */) {
-    tokio::spawn(
-        async move {
-            let recieved: Message<types::webview::Request> = serde_json::from_str(&arg).unwrap();
+    H: Fn(&types::webview::Request) -> std::option::Option<types::webview::Return> + Send
+>(handle: web_view::Handle<()>, arg: String, handler: H) {
+    let recieved: Message<types::webview::Request> = serde_json::from_str(&arg).unwrap();
 
-            // TODO: Get this to be passed into the function without needing a static lifetime
-            // let output = handler(received.inner)
+    // // TODO: Get this to be passed into the function without needing a static lifetime
+    let output = handler(&recieved.inner);
 
-            let output: Option<types::webview::Return> = {
-                use types::webview::Request::*;
-                use types::webview::*;
-
-                match &recieved.inner {
-                    Init => {
-                        None
-                    }
-                    Log { text } => {
-                        println!("{}", text);
-                        None
-                    }
-                    Increment { number } => {
-                        Some(Return::Increment {
-                            number: *number + 1
-                        })
-                    }
-                    DelayedIncrement { number } => {
-                        std::thread::sleep(std::time::Duration::from_millis(1000));
-                        Some(Return::DelayedIncrement {
-                            number: *number + 1
-                        })
-                    }
-                    ToUpperCase { text } => {
-                        let text: &String = text;
-                        Some(Return::ToUpperCase {
-                            text: text.to_string().to_ascii_uppercase()
-                        })
-                    }
-                    Test => {
-                        None
-                    }
-                }
+    if let Some(response) = output {
+        handle.dispatch(move | webview | {
+            let sending = Message {
+                subscription_id: recieved.subscription_id,
+                message_id: recieved.message_id,
+                inner: serde_json::to_string(&response).unwrap()
             };
 
-            if let Some(response) = output {
-                handle.dispatch(move | webview | {
-                    let sending = Message {
-                        subscription_id: recieved.subscription_id,
-                        message_id: recieved.message_id,
-                        inner: serde_json::to_string(&response).unwrap()
-                    };
+            let eval_script = format!(
+                r#"document.dispatchEvent(
+                    new CustomEvent("{event_name}", {{ detail: {{ messageId: {message_id:?}, inner: {content} }} }})
+                );"#,
+                event_name = sending.subscription_id,
+                message_id = sending.message_id,
+                content = sending.inner
+            );
 
-                    let eval_script = format!(
-                        r#"document.dispatchEvent(
-                            new CustomEvent("{event_name}", {{ detail: {{ messageId: {message_id:?}, inner: {content} }} }})
-                        );"#,
-                        event_name = sending.subscription_id,
-                        message_id = sending.message_id,
-                        content = sending.inner
-                    );
-
-                    webview.eval(&eval_script)
-                }).expect("Failed to send response");
-            }
-        }
-    );
+            webview.eval(&eval_script)
+        }).expect("Failed to send response");
+    }
 }
