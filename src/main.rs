@@ -11,7 +11,9 @@ fn main() {
     // let hello = warp::path!("hello" / String);
     
     let route = warp::path("assets")
-        .and(warp::fs::dir( std::fs::canonicalize(std::path::PathBuf::from("./assets")).unwrap() )).map(|file| {
+        .and(warp::fs::dir( std::fs::canonicalize(std::path::PathBuf::from("./assets"))
+            .expect("Assets folder not found!\nEnsure it is located in the same folder as the binary") )
+        ).map(|file| {
             warp::reply::with_header(file, "Access-Control-Allow-Origin", "*")
         });
 

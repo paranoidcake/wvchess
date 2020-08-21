@@ -1,5 +1,8 @@
 import { h } from 'preact'
 import { useEffect, useState } from 'preact/hooks'
+import './board.css'
+import { classNames } from './styles'
+import { Test } from '../test/Test'
 
 export const Board = () => {
     const [pieces, setPieces] = useState(new Map<string, string>([
@@ -10,7 +13,7 @@ export const Board = () => {
     useEffect(() => {
         const fetchPieceBlobs = async () => {
             const urlCreator = window.URL || window.webkitURL
-            console.log("urlCreator:", urlCreator)
+            // console.log("urlCreator:", urlCreator)
             const results = new Map<string, string>([
                 ['white_pawn', ''], ['white_knight', ''], ['white_bishop', ''], ['white_rook', ''], ['white_queen', ''], ['white_king', ''], 
                 ['black_pawn', ''], ['black_knight', ''], ['black_bishop', ''], ['black_rook', ''], ['black_queen', ''], ['black_king', ''] 
@@ -33,7 +36,9 @@ export const Board = () => {
 
     return (
         <div>
-            <img src={pieces.get('white_pawn')}/>
+            <Test />
+            <Test />
+            <img className={classNames.test} src={pieces.get('white_pawn')}/>
         </div>
     )
 }

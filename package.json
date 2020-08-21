@@ -2,18 +2,16 @@
   "dependencies": {
     "@babel/core": "^7.10.2",
     "@babel/runtime": "^7.10.2",
-    "@types/react-dom": "^16.9.8",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "inline-assets": "^1.4.5",
     "parcel-bundler": "^1.12.4",
+    "postcss-modules": "^3.2.1",
     "preact": "^10.4.4",
-    "replace-in-file": "^6.0.0",
     "uuid": "^8.1.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-runtime": "^7.10.1",
-    "@types/react": "^16.9.35",
     "@types/uuid": "^8.0.0",
     "babel-core": "^6.26.3",
     "typescript": "^3.9.3"
@@ -25,9 +23,10 @@
   "license": "MIT",
   "scripts": {
     "buildtypes": "cd ./types && wasm-pack build && cd ..",
-    "bundle": "parcel build index.html && replace-in-file '<script src=\"/' '<script src=\"./' ./dist/index.html,./dist/index.html && inline-assets --htmlmin --cssmin dist/index.html dist/bundle.html",
+    "inline": "inline-assets --htmlmin --cssmin dist/index.html dist/bundle.html",
+    "bundle": "parcel build index.html --public-url ./ && yarn run inline",
     "postbundle": "mkdir temp && mv dist/* temp/ && mv temp/*.html dist/ && rm -r temp",
-    "start": "yarn run buildtypes && yarn run bundle && cargo run",
+    "start": "yarn run bundle && cargo run",
     "build": "yarn run buildtypes && yarn run bundle && cargo build"
   }
 }

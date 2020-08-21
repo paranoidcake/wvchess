@@ -1,0 +1,1 @@
+export const classNames = {"test":"_test_8nf1c_1"}
