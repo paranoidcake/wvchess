@@ -9,20 +9,20 @@ fn main() {
 
     let mut rt = tokio::runtime::Runtime::new().unwrap();
 
-    // TODO: Try replace this webserver with calls to and from Rust
+    // // TODO: Try replace this webserver with calls to and from Rust
 
-    let route = warp::path("assets")
-        .and(warp::fs::dir( std::fs::canonicalize(std::path::PathBuf::from("./assets"))
-            .expect("Assets folder not found!\nEnsure it is located in the same folder as the binary") )
-        ).map(|file| {
-            warp::reply::with_header(file, "Access-Control-Allow-Origin", "*")
-        });
+    // let route = warp::path("assets")
+    //     .and(warp::fs::dir( std::fs::canonicalize(std::path::PathBuf::from("./assets"))
+    //         .expect("Assets folder not found!\nEnsure it is located in the same folder as the binary") )
+    //     ).map(|file| {
+    //         warp::reply::with_header(file, "Access-Control-Allow-Origin", "*")
+    //     });
 
     rt.block_on(async {
-        tokio::spawn(async move {
-            println!("Listening on 127.0.0.1:5673...");
-            warp::serve(route).run(([127, 0, 0, 1], 5673)).await;
-        });
+        // tokio::spawn(async move {
+        //     println!("Listening on 127.0.0.1:5673...");
+        //     warp::serve(route).run(([127, 0, 0, 1], 5673)).await;
+        // });
 
         
         web_view::builder()
@@ -40,11 +40,11 @@ fn main() {
                         lib::handle_message(handle, message, |request| {
                             use types::webview::Request::*;
                             use types::webview::Return;
-                            use std::fs::read_to_string;
+                            use std::fs;
 
                             match &request {
                                 Open { path } => {
-                                    let content = read_to_string(path);
+                                    let content = fs::read(path);
 
                                     match content {
                                         Ok(value) => Some(
