@@ -2,6 +2,7 @@ extern crate serde_json;
 extern crate serde_derive;
 use serde_derive::*;
 use std::result::Result;
+use std::option::Option;
 use types::webview::{Request, Return};
 
 #[derive(Serialize, Deserialize)]
@@ -12,7 +13,7 @@ pub struct Message<T> {
 }
 
 pub fn handle_message<
-    H: Fn(&Request) -> std::option::Option<Return> + Send
+    H: Fn(&Request) -> Option<Result<Return, String>>
 >(handle: web_view::Handle<()>, arg: String, handler: H) -> Result<(), web_view::Error> {
     let recieved: Message<Request> = serde_json::from_str(&arg).unwrap();
 

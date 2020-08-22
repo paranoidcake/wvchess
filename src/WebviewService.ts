@@ -2,6 +2,8 @@ import { v4 as generateUUID } from "uuid"
 import { useEffect, useState } from "preact/hooks";
 import { Request, Return } from "../types/pkg/types";
 
+type Result<T> = { Ok: T, Err: null } | { Ok: null, Err: string }
+
 class WebviewMessage<T> {
     subscription_id: string;
     message_id: string;
@@ -31,28 +33,36 @@ class WebviewService {
     private getPromiseAndInvoke = (request: Request) => {
         let message = new WebviewMessage(this.subscription_id, request)
 
-        if(narrowReturnType(request as Return) !== null) {
-            const promise: Promise<any> = new Promise((resolve, _) => {
-                let event_listener = ((response: CustomEvent) => {
-                    if(response.detail.messageId == message.message_id) {
-                        document.removeEventListener(this.subscription_id, this.sent_messages[message.message_id].event_listener)
-                        delete this.sent_messages[message.message_id]
-    
-                        // console.log("Cleaned up this listener")
-                        resolve(this.handler(this.unwrapper(response)))
+        // TODO: Reintroduce runtime type safety
+        // if(narrowReturnType(request as Return) !== null) {
+        const promise: Promise<any> = new Promise((resolve, reject) => {
+            let event_listener = ((response: CustomEvent) => {
+                if(response.detail.messageId == message.message_id) {
+                    // Clean up event listener
+                    document.removeEventListener(this.subscription_id, this.sent_messages[message.message_id].event_listener)
+                    delete this.sent_messages[message.message_id]
+
+                    // Process the Result from rust
+                    const result = response.detail.inner as Result<any>
+
+                    if(result.Ok) {
+                        resolve(this.handler(result.Ok))
+                    } else {
+                        reject(result.Err)
                     }
-                }) as EventListener
-    
-                this.sent_messages[message.message_id] = { event_listener: event_listener }
-    
-                document.addEventListener(this.subscription_id, event_listener)
-            });
-    
-            this.invoke(message);
-            return promise;
-        } else {
-            this.invoke(message);
-        }
+                }
+            }) as EventListener
+
+            this.sent_messages[message.message_id] = { event_listener: event_listener }
+
+            document.addEventListener(this.subscription_id, event_listener)
+        });
+
+        this.invoke(message);
+        return promise;
+        // } else {
+        //     this.invoke(message);
+        // }
     }
 
     /**
@@ -93,10 +103,10 @@ class WebviewService {
 }
 
 export const narrowReturnType = (detail: Partial<Return>) => {
-    if(detail.tag === 'delayedIncrement' || detail.tag === 'increment') {
-        return detail?.fields?.number
-    } else if (detail.tag === 'toUpperCase') {
-        return detail?.fields?.text
+    if(detail.tag === 'open') {
+        return detail.fields?.file_content
+    } else if(detail.tag === 'echo') {
+        return detail.fields?.text
     } else {
         return null
     }

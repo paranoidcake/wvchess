@@ -4,23 +4,19 @@ pub mod webview {
     use wasm_bindgen::prelude::*;
     use wasm_typescript_definition::*;
     use serde_derive::*;
+    use std::result::Result;
 
     #[derive(Deserialize, Serialize, TypescriptDefinition)]
     #[serde(tag = "tag", content = "fields", rename_all = "camelCase")]
     pub enum Request {
-        Init,
-        Log { text: String },
-        Increment { number: isize },
-        DelayedIncrement { number: isize },
-        ToUpperCase { text: String },
-        Test
+        Open { path: String },
+        Echo { text: String }
     }
     
     #[derive(Deserialize, Serialize, TypescriptDefinition, std::fmt::Debug)]
     #[serde(tag = "tag", content = "fields", rename_all = "camelCase")]
     pub enum Return {
-        Increment { number: isize },
-        DelayedIncrement { number: isize },
-        ToUpperCase { text: String }
+        Open { file_content: String },
+        Echo { text: String }
     }
 }

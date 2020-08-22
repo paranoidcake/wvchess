@@ -3,12 +3,16 @@ import { useEffect, useState } from 'preact/hooks'
 import './board.css'
 import { classNames } from './styles'
 import { Test } from '../test/Test'
+import { useWebviewService } from '../../WebviewService'
 
 export const Board = () => {
     const [pieces, setPieces] = useState(new Map<string, string>([
         ['white_pawn', ''], ['white_knight', ''], ['white_bishop', ''], ['white_rook', ''], ['white_queen', ''], ['white_king', ''], 
         ['black_pawn', ''], ['black_knight', ''], ['black_bishop', ''], ['black_rook', ''], ['black_queen', ''], ['black_king', ''] 
     ]))
+
+    const service = useWebviewService()
+    const openFile = (path: string) => service.send(() => ({tag: 'open', fields: { path: path }}))
 
     useEffect(() => {
         const fetchPieceBlobs = async () => {
@@ -32,6 +36,7 @@ export const Board = () => {
         }
 
         fetchPieceBlobs()
+        openFile('./assets/white_pawn.png').then(result => console.log(result))
     }, [])
 
     return (

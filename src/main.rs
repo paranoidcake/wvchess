@@ -40,34 +40,24 @@ fn main() {
                         lib::handle_message(handle, message, |request| {
                             use types::webview::Request::*;
                             use types::webview::Return;
-                    
+                            use std::fs::read_to_string;
+
                             match &request {
-                                Init => {
-                                    None
-                                }
-                                Log { text } => {
-                                    println!("{}", text);
-                                    None
-                                }
-                                Increment { number } => {
-                                    Some(Return::Increment {
-                                        number: *number + 1
-                                    })
-                                }
-                                DelayedIncrement { number } => {
-                                    std::thread::sleep(std::time::Duration::from_millis(1000));
-                                    Some(Return::DelayedIncrement {
-                                        number: *number + 1
-                                    })
-                                }
-                                ToUpperCase { text } => {
-                                    let text: &String = text;
-                                    Some(Return::ToUpperCase {
-                                        text: text.to_string().to_ascii_uppercase()
-                                    })
-                                }
-                                Test => {
-                                    None
+                                Open { path } => {
+                                    let content = read_to_string(path);
+
+                                    match content {
+                                        Ok(value) => Some(
+                                            Ok(Return::Open {
+                                                file_content: value
+                                            })
+                                        ), Err(error) => {
+                                            Some( Err(format!("{}", error)) )
+                                        }
+                                    }
+                                },
+                                Echo { text } => {
+                                    Some(Ok(Return::Echo { text: text.to_string() }))
                                 }
                             }
                         }
