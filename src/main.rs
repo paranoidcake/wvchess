@@ -1,3 +1,4 @@
+mod lib;
 extern crate web_view;
 extern crate types;
 use web_view::{Content, WebView};
@@ -8,8 +9,8 @@ fn main() {
 
     let mut rt = tokio::runtime::Runtime::new().unwrap();
 
-    // let hello = warp::path!("hello" / String);
-    
+    // TODO: Try replace this webserver with calls to and from Rust
+
     let route = warp::path("assets")
         .and(warp::fs::dir( std::fs::canonicalize(std::path::PathBuf::from("./assets"))
             .expect("Assets folder not found!\nEnsure it is located in the same folder as the binary") )
@@ -23,18 +24,22 @@ fn main() {
             warp::serve(route).run(([127, 0, 0, 1], 5673)).await;
         });
 
-        tokio::spawn(
-            async move {
-                web_view::builder()
-                    .title("My Project")
-                    .content(Content::Html(html_content))
-                    .resizable(true)
-                    .debug(true)
-                    .user_data(())
-                    .invoke_handler(|webview: &mut WebView<()>, arg: &str| {
-                        handle_message(webview.handle(), arg.to_string(), |request| {
+        
+        web_view::builder()
+            .title("My Project")
+            .content(Content::Html(html_content))
+            .resizable(true)
+            .debug(true)
+            .user_data(())
+            .invoke_handler(|webview: &mut WebView<()>, arg: &str| {
+                let handle = webview.handle();
+                let message = arg.to_string();
+
+                tokio::spawn(
+                    async move {
+                        lib::handle_message(handle, message, |request| {
                             use types::webview::Request::*;
-                            use types::webview::*;
+                            use types::webview::Return;
                     
                             match &request {
                                 Init => {
@@ -65,53 +70,14 @@ fn main() {
                                     None
                                 }
                             }
-                        });
-                        Ok(())
-                    })
-                    .run()
-                    .unwrap();
-            }
-        );
+                        }
+                    )
+                });
+
+                Ok(())
+            })
+            .run()
+            .unwrap();
+            
     });
-}
-
-extern crate serde_json;
-extern crate serde_derive;
-use serde_derive::*;
-
-#[derive(Serialize, Deserialize)]
-pub struct Message<T> {
-    subscription_id: String,
-    message_id: String,
-    inner: T
-}
-
-fn handle_message<
-    H: Fn(&types::webview::Request) -> std::option::Option<types::webview::Return> + Send
->(handle: web_view::Handle<()>, arg: String, handler: H) {
-    let recieved: Message<types::webview::Request> = serde_json::from_str(&arg).unwrap();
-
-    // // TODO: Get this to be passed into the function without needing a static lifetime
-    let output = handler(&recieved.inner);
-
-    if let Some(response) = output {
-        handle.dispatch(move | webview | {
-            let sending = Message {
-                subscription_id: recieved.subscription_id,
-                message_id: recieved.message_id,
-                inner: serde_json::to_string(&response).unwrap()
-            };
-
-            let eval_script = format!(
-                r#"document.dispatchEvent(
-                    new CustomEvent("{event_name}", {{ detail: {{ messageId: {message_id:?}, inner: {content} }} }})
-                );"#,
-                event_name = sending.subscription_id,
-                message_id = sending.message_id,
-                content = sending.inner
-            );
-
-            webview.eval(&eval_script)
-        }).expect("Failed to send response");
-    }
 }
