@@ -1,3 +1,21 @@
-.test {
-    background-color: blue;
+.odd-tile {
+    background-color: burlywood;
+    width: 64px;
+    height: 64px;
+}
+
+.even-tile {
+    background-color: white;
+    width: 64px;
+    height: 64px;
+}
+
+.empty-tile {
+}
+
+.board {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto;
+    max-height: 50%;
+    max-width: 50%;
 }
