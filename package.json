@@ -2,6 +2,7 @@
   "dependencies": {
     "@babel/core": "^7.10.2",
     "@babel/runtime": "^7.10.2",
+    "@types/node": "^14.6.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "inline-assets": "^1.4.5",
@@ -24,7 +25,7 @@
   "scripts": {
     "buildtypes": "cd ./types && wasm-pack build && cd ..",
     "inline": "inline-assets --htmlmin --cssmin dist/index.html dist/bundle.html",
-    "bundle": "parcel build index.html --public-url ./ && yarn run inline",
+    "bundle": "parcel build index.html --public-url ./ --no-minify --no-source-maps && yarn run inline",
     "postbundle": "mkdir temp && mv dist/* temp/ && mv temp/*.html dist/ && rm -r temp",
     "start": "yarn run bundle && cargo run",
     "build": "yarn run buildtypes && yarn run bundle && cargo build"

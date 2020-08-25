@@ -1,6 +1,6 @@
 import { v4 as generateUUID } from "uuid"
 import { useEffect, useState } from "preact/hooks";
-import { Request, Return } from "../types/pkg/types";
+import { Request, Return } from "../../types/pkg/types";
 
 type Result<T> = { Ok: T, Err: null } | { Ok: null, Err: string }
 
@@ -105,6 +105,8 @@ class WebviewService {
 export const narrowReturnType = (detail: Partial<Return>) => {
     if(detail.tag === 'open') {
         return detail.fields?.file_content
+    } else if (detail.tag === 'openDir') {
+        return detail.fields?.file_contents
     } else if(detail.tag === 'echo') {
         return detail.fields?.text
     } else {
