@@ -3,97 +3,83 @@ import './board.css'
 import { useEffect, useState } from 'preact/hooks'
 import { classNames } from './styles'
 import { useWebviewService } from '../../lib/WebviewService'
+// import { Chess } from '../../lib/Chess'
+import { PieceType, Chess, ChessInstance } from 'chess.js'
 import { Piece } from '../piece/Piece'
 
 export const Board = () => {
     const service = useWebviewService()
     const openDir = (path: string) => service.send(() => ({tag: 'openDir', fields: { path: path, include_extensions: false }}))
 
-    // const [imageUrls, setImageUrls] = useState(new Map<string, string>([
-    //     ['white_pawn', ''], ['white_knight', ''], ['white_bishop', ''], ['white_rook', ''], ['white_queen', ''], ['white_king', ''], 
-    //     ['black_pawn', ''], ['black_knight', ''], ['black_bishop', ''], ['black_rook', ''], ['black_queen', ''], ['black_king', ''] 
-    // ]))
+    const [imageUrls, setImageUrls] = useState(
+        new Map<"w" | "b", Map<PieceType, string>>([
+            ["w", new Map([
+                ["b", ""], ["p", ""], ["n", ""], ["r", ""], ["q", ""], ["k", ""]
+            ])], 
+            ["b", new Map([
+                ["b", ""], ["p", ""], ["n", ""], ["r", ""], ["q", ""], ["k", ""]
+            ])]
+        ])
+    )
 
-    const [imageUrls, setImageUrls] = useState(new Map([
-        [0, ''], [1, ''], [2, ''], [3, ''], [4, ''], [5, ''], 
-        [6, ''], [7, ''], [8, ''], [9, ''], [10, ''], [11, ''], [12, null] 
-    ]))
+    // const [chess, setChess] = useState(undefined as Chess | undefined)
+    const [chess, setChess] = useState(new Chess())
 
-    const numToName = new Map([
-        [0, 'white_pawn'], [1, 'white_knight'], [2, 'white_bishop'], [3, 'white_rook'], [4, 'white_queen'], [5, 'white_king'], 
-        [6, 'black_pawn'], [7, 'black_knight'], [8, 'black_bishop'], [9, 'black_rook'], [10, 'black_queen'], [11, 'black_king'], [12, 'none']
+    const nameToPiece = new Map<string, {type: PieceType, color: "w" | "b"}>([
+        ['white_pawn', {type: 'p', color: 'w'}],
+        ['white_knight', {type: 'p', color: 'w'}],
+        ['white_bishop', {type: 'p', color: 'w'}],
+        ['white_rook', {type: 'p', color: 'w'}],
+        ['white_queen', {type: 'p', color: 'w'}],
+        ['white_king', {type: 'p', color: 'w'}],
+
+        ['black_pawn', {type: 'p', color: 'w'}],
+        ['black_knight', {type: 'p', color: 'w'}],
+        ['black_bishop', {type: 'p', color: 'w'}],
+        ['black_rook', {type: 'p', color: 'w'}],
+        ['black_queen', {type: 'p', color: 'w'}],
+        ['black_king', {type: 'p', color: 'w'}]
     ])
 
-    const nameToNum = new Map([
-        ['white_pawn', 0], ['white_knight', 1], ['white_bishop', 2], ['white_rook', 3], ['white_queen', 4], ['white_king', 5], 
-        ['black_pawn', 6], ['black_knight', 7], ['black_bishop', 8], ['black_rook', 9], ['black_queen', 10], ['black_king', 11], ['none', 12]
-    ])
+    // TODO: Just fetch the image at load time
+    // 
+    // const getBoardWithImages = (chessInstance: ChessInstance ,imageUrls: Map<"w" | "b", Map<PieceType, string>>) => {
+    //     const board = chessInstance.board()
+    //     if(board !== null && imageUrls !== undefined) {
+    //         const newBoard: { type: PieceType; color: "w" | "b"; imageUrl?: string | undefined; }[][] = []
+    //         for(let i of board) {
+    //             if(i !== null && i !== undefined) {
+    //                 const row: { type: PieceType; color: "b" | "w"; imageUrl?: string | undefined }[] = []
+    //                 for(let piece of row) {
+    //                     if(piece !== null && piece !== undefined) {
+    //                         // const newPiece: {type: PieceType, color: "b" | "w", imageUrl?: string} = {...piece, imageUrl: ''}
+    //                         const newPiece = {type: piece.type, color: piece.color, imageUrl: imageUrls.get(piece.color)?.get(piece.type)}
+        
+    //                         // newPiece.imageUrl = this.imageUrls.get(piece.color)?.get(piece.type)
+    //                         row.push(newPiece)
+    //                     }
+    //                 }
+    //                 newBoard.push(row)
+    //             }
+    //         }
+    
+    //         return newBoard
+    //     } else {
+    //         return board
+    //     }
+    // }
 
-    const [board, setBoard] = useState([
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12],
-        [12, 12, 12, 12, 12, 12, 12, 12]
-    ] as (number | 12)[][])
-
-    const initialiseBoard = () => {
-        const result: (number)[][] = []
-        let offset = 0
-        for(let i = 0; i < board.length; i++) {
-            if(i - 4 >= 0) {
-                offset = 6
-            }
-            result[i] = []
-            for(let j = 0; j < board[i].length; j++) {
-                result[i][j] = 12
-
-                // Pawns
-                if(i === 1 || i === 6) {
-                    result[i][j] = offset + 0
-                }
-
-                // Back ranks
-                if(i === 0 || i === 7) {
-                    // Knights
-                    if(j === 1 || j === 6) {
-                        result[i][j] = offset + 1
-                    }
-                    // Bishops
-                    if(j === 2 || j === 5) {
-                        result[i][j] = offset + 2
-                    }
-                    // Rooks
-                    if(j === 0 || j === 7) {
-                        result[i][j] = offset + 3
-                    }
-                    // Queen
-                    if(j === 3) {
-                        result[i][j] = offset + 4
-                    }
-                    // King
-                    if(j === 4) {
-                        result[i][j] = offset + 5
-                    }
-                }
-            }
-        }
-
-        console.log(result)
-
-        setBoard(result)
-    }
-
+    // Fetch image urls
     useEffect(() => {
         const fetchImageUrls = async () => {
             const urlCreator = window.URL || window.webkitURL
 
-            const results = new Map([
-                [0, ''], [1, ''], [2, ''], [3, ''], [4, ''], [5, ''], 
-                [6, ''], [7, ''], [8, ''], [9, ''], [10, ''], [11, ''], [12, null] 
+            const results = new Map<"w" | "b", Map<PieceType, string>>([
+                ["w", new Map([
+                    ["b", ""], ["p", ""], ["n", ""], ["r", ""], ["q", ""], ["k", ""]
+                ])], ["b", new Map([
+                    ["b", ""], ["p", ""], ["n", ""], ["r", ""], ["q", ""], ["k", ""]
+                ])]
             ])
 
             const map = await openDir('./assets/')
@@ -101,41 +87,41 @@ export const Board = () => {
             for(let [key, value] of Object.entries(map)) {
                 let bytes = new Uint8Array(value as Array<number>)
                 const url = urlCreator.createObjectURL(new Blob([bytes.buffer], {type: 'image/png'}))
-                results.set(nameToNum.get(key)!, url)
+                // results.set(nameToNum.get(key)!, url)
+
+                const piece = nameToPiece.get(key)!
+                const newMap = results.get(piece.color)!.set(piece.type, url)
+                results.set(piece.color, newMap)
             }
 
             setImageUrls(results)
         }
 
-        // Fetch image urls
+        console.log("Fetching image urls")
         fetchImageUrls()
 
-        // Populate board
-        initialiseBoard()
+        console.log("Current board state:")
+        console.log(chess.ascii())
     }, [])
 
     return (
         <div>
             <span className={classNames.board}>
-                {board.map((row, rindex) => {
+                {chess.board().map((row, rindex) => {
                     return row.map((piece, cindex) => {
-                        let empty = ''
-                        if(piece === 12) {
-                            empty = " "+classNames["empty-tile"]
-                        }
-                        if((cindex - (rindex % 2)) % 2 === 0) {
-                            return (
-                            <span className={classNames["even-tile"] + empty}>
-                                <Piece key={cindex} name={numToName.get(piece)!} imageUrl={imageUrls.get(piece)} />
-                            </span>
-                            )
-                        } else {
-                            return (
-                            <span className={classNames["odd-tile"] + empty}>
-                                <Piece key={cindex} name={numToName.get(piece)!} imageUrl={imageUrls.get(piece)} />
-                            </span>
-                            )
-                        }
+                        const className = (() => {
+                            if((cindex - rindex) % 2 === 0) {
+                                return classNames["odd-tile"]
+                            } else {
+                                return classNames["even-tile"]
+                            }
+                        })()
+
+                        return (
+                        <span className={className}>
+                            <Piece key={rindex + cindex} />
+                        </span>
+                        )
                     })
                 })}
             </span>

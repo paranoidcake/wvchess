@@ -5,7 +5,6 @@ export const Main = () => {
     return (
         <div>
             <Board/>
-            <Board/>
         </div>
     )
 }

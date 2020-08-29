@@ -2,9 +2,11 @@
   "dependencies": {
     "@babel/core": "^7.10.2",
     "@babel/runtime": "^7.10.2",
+    "@types/chess.js": "^0.10.1",
     "@types/node": "^14.6.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
+    "chess.js": "^0.11.0",
     "inline-assets": "^1.4.5",
     "parcel-bundler": "^1.12.4",
     "postcss-modules": "^3.2.1",
