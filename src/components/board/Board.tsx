@@ -1,8 +1,7 @@
 import { h } from 'preact'
 import './board.css'
-import { useEffect, useState, StateUpdater } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { classNames } from './styles'
-import { Test } from '../test/Test'
 import { useWebviewService } from '../../lib/WebviewService'
 import { Piece } from '../piece/Piece'
 

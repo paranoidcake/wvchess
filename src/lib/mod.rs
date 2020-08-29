@@ -5,6 +5,8 @@ use std::result::Result;
 use std::option::Option;
 use types::webview::{Request, Return};
 
+pub mod fs;
+
 #[derive(Serialize, Deserialize)]
 pub struct Message<T> {
     subscription_id: String,
