@@ -1,1 +1,1 @@
-export const classNames = {"odd-tile":"_odd-tile_1ygje_1","even-tile":"_even-tile_1ygje_7","empty-tile":"_empty-tile_1ygje_13","board":"_board_1ygje_16"}
+export const classNames = {"odd-tile":"_odd-tile_1fy3k_1","even-tile":"_even-tile_1fy3k_7","empty-tile":"_empty-tile_1fy3k_13","board":"_board_1fy3k_16"}

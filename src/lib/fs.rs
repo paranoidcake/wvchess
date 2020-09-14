@@ -34,7 +34,7 @@ pub fn open_dir(path: &String, include_extensions: &bool) -> Option<Result<Retur
                             }
 
                             if let Ok(key) = file_name {
-                                println!("{}", key);
+                                // println!("{}", key);
                                 file_contents.insert(key, file_content);
                             }
                         },

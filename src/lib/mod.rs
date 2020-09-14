@@ -6,6 +6,7 @@ use std::option::Option;
 use types::webview::{Request, Return};
 
 pub mod fs;
+pub mod chess;
 
 #[derive(Serialize, Deserialize)]
 pub struct Message<T> {
@@ -15,8 +16,9 @@ pub struct Message<T> {
 }
 
 pub fn handle_message<
+    T,
     H: Fn(&Request) -> Option<Result<Return, String>>
->(handle: web_view::Handle<()>, arg: String, handler: H) -> Result<(), web_view::Error> {
+>(handle: web_view::Handle<T>, arg: String, handler: H) -> Result<(), web_view::Error> {
     let recieved: Message<Request> = serde_json::from_str(&arg).unwrap();
 
     // // TODO: Get this to be passed into the function without needing a static lifetime

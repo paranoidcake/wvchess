@@ -11,7 +11,8 @@ pub mod webview {
     pub enum Request {
         Open { path: String },
         OpenDir { path: String, include_extensions: bool },
-        Echo { text: String }
+        Echo { text: String },
+        GetBoardString
     }
     
     #[derive(Deserialize, Serialize, TypescriptDefinition, std::fmt::Debug)]
@@ -19,6 +20,7 @@ pub mod webview {
     pub enum Return {
         Open { file_content: Vec<u8> },
         OpenDir { file_contents: HashMap<String, Vec<u8>> },
-        Echo { text: String }
+        Echo { text: String },
+        GetBoardString { board_string: String }
     }
 }
