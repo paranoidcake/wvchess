@@ -1,13 +1,13 @@
 .odd-tile {
     background-color: burlywood;
-    width: 64px;
-    height: 64px;
+    /* width: 64px;
+    height: 64px; */
 }
 
 .even-tile {
     background-color: white;
-    width: 64px;
-    height: 64px;
+    /* width: 64px;
+    height: 64px; */
 }
 
 .empty-tile {
@@ -16,6 +16,5 @@
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    max-height: 50%;
-    max-width: 50%;
+    grid-template-rows: repeat(8, 1fr);
 }
