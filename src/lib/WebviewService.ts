@@ -153,18 +153,22 @@ export function useWebviewService(handler?: (content: Return) => any, unwrapper?
     }, [])
     return service
 }
-  
+
+/**
+ * Wraps the useState hook in order to resolve concurrency issues when changing state based on calls to the rust backend
+ */
 export function useBoxedState<S>(initialState: S | (() => S)): [{value: S}, (value: S | ((prevState: S) => S)) => void] {
     const [internalState, setInternalState] = useState(initialState)
     const box = { value: internalState }
 
     function setExternalState (value: S | ((prevState: S) => S)) {
-        if(value instanceof Function) {
-            box.value = value(box.value);
-        } else {
-            box.value = value
-        }
+        // if(value instanceof Function) {
+        //     box.value = value(box.value);
+        // } else {
+        //     box.value = value
+        // }
         setInternalState(value)
+        box.value = internalState // TODO: Test that this works
     }
 
     return [box, setExternalState]
