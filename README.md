@@ -4,7 +4,8 @@ This project was copied from my [coderdojo-meetings](https://github.com/paranoid
 
 ## Development Setup
 
-  1. Install dependencies with `yarn install`
+  0. Install `rust` and `webkit2gtk`
+  1. Install node dependencies with `yarn install`
   2. Install `wasm-pack` from [here](https://rustwasm.github.io/wasm-pack/installer/)
   3. Run `yarn run build`. The first build may take a while, but subsequent builds will be much faster.
   

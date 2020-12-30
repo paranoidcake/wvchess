@@ -12,7 +12,8 @@ pub mod webview {
         Open { path: String },
         OpenDir { path: String, include_extensions: bool },
         Echo { text: String },
-        GetBoardString
+        BoardString,
+        LegalMoves
     }
     
     #[derive(Deserialize, Serialize, TypescriptDefinition, std::fmt::Debug)]
@@ -21,6 +22,7 @@ pub mod webview {
         Open { file_content: Vec<u8> },
         OpenDir { file_contents: HashMap<String, Vec<u8>> },
         Echo { text: String },
-        GetBoardString { board_string: String }
+        BoardString { board_string: String },
+        LegalMoves {legal_moves: Vec<(String, u16)>}
     }
 }

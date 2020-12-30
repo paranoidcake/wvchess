@@ -13,6 +13,10 @@
 .empty-tile {
 }
 
+.legal-move {
+    background-color: greenyellow;
+}
+
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);

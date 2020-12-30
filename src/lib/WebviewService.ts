@@ -109,8 +109,10 @@ export const narrowReturnType = (detail: Partial<Return>) => {
         return detail.fields?.file_contents
     } else if(detail.tag === 'echo') {
         return detail.fields?.text
-    } else if(detail.tag === 'getBoardString') {
+    } else if(detail.tag === 'boardString') {
         return detail.fields?.board_string
+    } else if(detail.tag === 'legalMoves'){
+        return detail.fields?.legal_moves
     } else {
         return null
     }

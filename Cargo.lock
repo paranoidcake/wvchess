@@ -664,6 +664,7 @@ dependencies = [
 name = "types"
 version = "0.1.0"
 dependencies = [
+ "pleco",
  "serde",
  "serde_derive",
  "serde_json",

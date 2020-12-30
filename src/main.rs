@@ -35,7 +35,8 @@ fn main() {
                                 Echo { text } => {
                                     Some(Ok(types::webview::Return::Echo { text: text.to_string() }))
                                 },
-                                GetBoardString => lib::chess::get_board_string(&board_clone)
+                                BoardString => lib::chess::board_string(&board_clone),
+                                LegalMoves => lib::chess::legal_moves(&board_clone)
                             }
                         })
                     }

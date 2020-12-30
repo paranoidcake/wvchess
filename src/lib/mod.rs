@@ -21,7 +21,6 @@ pub fn handle_message<
 >(handle: web_view::Handle<T>, arg: String, handler: H) -> Result<(), web_view::Error> {
     let recieved: Message<Request> = serde_json::from_str(&arg).unwrap();
 
-    // // TODO: Get this to be passed into the function without needing a static lifetime
     let output = handler(&recieved.inner);
 
     match output {

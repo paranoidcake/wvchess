@@ -1,16 +1,10 @@
 import { h } from 'preact'
+import { BoardPiece } from '../board/Board'
 
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k"
 
-export const Piece = ({pieceImage}: {pieceImage: string | null}) => {
-    if(pieceImage !== null) {
-        return (
-            <img src={pieceImage} />
-        )
-    } else {
-        return (
-            // <img src={imageUrl} style="visibility: hidden"/>
-            <span/>
-        )
-    }
-}
+export const Piece = ({piece, onClick}: {piece: BoardPiece, onClick?: h.JSX.MouseEventHandler<HTMLImageElement>}) => 
+    piece.url !== null ?
+    <img src={piece.url!} onClick={onClick}/>
+    :
+    <span />
