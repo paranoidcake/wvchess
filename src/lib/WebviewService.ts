@@ -2,7 +2,7 @@ import { v4 as generateUUID } from "uuid"
 import { useEffect, useState } from "preact/hooks";
 import { Request, Return } from "../../types/pkg/types";
 
-type Result<T> = { Ok: T, Err: null } | { Ok: null, Err: string }
+type Result<T, U> = { Ok: T, Err: null } | { Ok: null, Err: U }
 
 class WebviewMessage<T> {
     subscription_id: string;
@@ -19,12 +19,12 @@ class WebviewMessage<T> {
 class WebviewService {
     private subscription_id = generateUUID();
 
-    private handler: (content: any) => any;
-    private unwrapper: (content: any) => any;
+    // private handler: (content: any) => any;
+    // private unwrapper: (content: any) => any; // Is the unwrapper still usable?
 
     private sent_messages: { [messageId: string]: { event_listener: EventListener } } = {};
 
-    private queue: (fn: () => any) => Promise<any>;
+    private queue: (fn: () => any) => Promise<Return>;
 
     private invoke = <M>(arg: WebviewMessage<M>) => {
         (window as any).external.invoke(JSON.stringify(arg));
@@ -33,53 +33,51 @@ class WebviewService {
     private getPromiseAndInvoke = (request: Request) => {
         let message = new WebviewMessage(this.subscription_id, request)
 
-        // TODO: Reintroduce runtime type safety
-        // if(narrowReturnType(request as Return) !== null) {
-        const promise: Promise<any> = new Promise((resolve, reject) => {
-            let event_listener = ((response: CustomEvent) => {
-                if(response.detail.messageId == message.message_id) {
-                    // Clean up event listener
-                    document.removeEventListener(this.subscription_id, this.sent_messages[message.message_id].event_listener)
-                    delete this.sent_messages[message.message_id]
+        if((request as Partial<Return>).fields !== undefined) {
+            const promise: Promise<Return> = new Promise((resolve, reject) => {
+                let event_listener = ((response: CustomEvent) => {
+                    if(response.detail.messageId == message.message_id) {
+                        // Clean up event listener
+                        document.removeEventListener(this.subscription_id, this.sent_messages[message.message_id].event_listener)
+                        delete this.sent_messages[message.message_id]
 
-                    // Process the Result from rust
-                    const result = response.detail.inner as Result<any>
+                        // Process the Result from rust
+                        const result = response.detail.inner as Result<Return, string>
 
-                    if(result.Ok) {
-                        resolve(this.handler(result.Ok))
-                    } else {
-                        reject(result.Err)
+                        if(result.Ok) {
+                            resolve(result.Ok)
+                        } else {
+                            reject(result.Err)
+                        }
                     }
-                }
-            }) as EventListener
+                }) as EventListener
 
-            this.sent_messages[message.message_id] = { event_listener: event_listener }
+                this.sent_messages[message.message_id] = { event_listener: event_listener }
 
-            document.addEventListener(this.subscription_id, event_listener)
-        });
+                document.addEventListener(this.subscription_id, event_listener)
+            });
 
-        this.invoke(message);
-        return promise;
-        // } else {
-        //     this.invoke(message);
-        // }
+            this.invoke(message);
+            return promise;
+        } else {
+            this.invoke(message);
+        }
     }
 
     /**
      * Sends a request to the backend
      */
     send = (closure: () => Request) => {
+        // TODO: Return the type::Return and a type guard to validate it?
         return this.queue(async () => {
             return await this.getPromiseAndInvoke(closure())
         })
     }
 
-    private createPromiseQueue = (/*stopOnError: boolean*/) => {
+    private createPromiseQueue = () => {
         let p: Promise<any> = Promise.resolve()
-        return function(fn: (request: Request) => any) {
-            p = p
-            // .then(null, function() { if(!stopOnError) return Promise.resolve() })
-            .then(fn);
+        return (fn: (request: Request) => any) => {
+            p = p.then(fn);
             return p
         }
     }
@@ -95,56 +93,63 @@ class WebviewService {
         }
     }
   
-    constructor(handler: (content: any) => void, unwrapper: (event: CustomEvent) => any) {
-        this.handler = handler;
-        this.unwrapper = unwrapper;
+    constructor(/*handler: (content: any) => void, unwrapper: (event: CustomEvent) => any*/) {
+        // this.handler = handler;
+        // this.unwrapper = unwrapper;
         this.queue = this.createPromiseQueue();
     }
 }
 
-export const narrowReturnType = (detail: Partial<Return>) => {
-    if(detail.tag === 'open') {
-        return detail.fields?.file_content
-    } else if (detail.tag === 'openDir') {
-        return detail.fields?.file_contents
-    } else if(detail.tag === 'echo') {
-        return detail.fields?.text
-    } else if(detail.tag === 'boardString') {
-        return detail.fields?.board_string
-    } else if(detail.tag === 'legalMoves'){
-        return detail.fields?.legal_moves
-    } else {
-        return null
-    }
-}
+// TODO: Remove narrowReturnType, implement my own TS type generating macro
+// This function no longer provides any benefit
+// 
+// export const narrowReturnType = (detail: Partial<Return>) => {
+//     if(detail.tag === 'open') {
+//         return detail.fields
+//     } else if (detail.tag === 'openDir') {
+//         return detail.fields
+//     } else if(detail.tag === 'echo') {
+//         return detail.fields
+//     } else if(detail.tag === 'boardString') {
+//         return detail.fields
+//     } else if(detail.tag === 'legalMoves'){
+//         return detail.fields
+//     } else {
+//         return null
+//     }
+// }
 
 /**
  * Returns a WebviewService instance
  */
-export function useWebviewService(): WebviewService;
+// export function useWebviewService(): WebviewService;
 
 /**
  * Returns a WebviewService instance
  * @param handler A function to handle responses from the backend. Should return the value to be recieved by `service.send`
  */
-export function useWebviewService(handler: (content: Return) => any): WebviewService;
+// export function useWebviewService(handler: (content: Return) => any): WebviewService;
 
 /**
  * Returns a WebviewService instance
  * @param handler A function to handle responses from the backend. Should return the value to be recieved by `service.send`
  * @param unwrapper Optional function to expose the CustomEvent received from the backend. Should return the value that is passed to `handler` as `content`
  */
-export function useWebviewService<T>(handler: (content: T) => any, unwrapper: (event: CustomEvent) => T): WebviewService;
+// export function useWebviewService<T>(handler: (content: T) => any, unwrapper: (event: CustomEvent) => T): WebviewService;
 
-export function useWebviewService(handler?: (content: Return) => any, unwrapper?: (event: CustomEvent) => Return): WebviewService {
-    const defaultUnwrapper = (event: CustomEvent) => {
-        return event.detail.inner as Return
-    }
+/**
+ * Returns a WebviewService instance
+ */
+export function useWebviewService(/*handler?: (content: Return) => any, unwrapper?: (event: CustomEvent) => Return*/): WebviewService {
+    // const defaultUnwrapper = (event: CustomEvent) => {
+    //     return event.detail.inner as Return
+    // }
 
-    unwrapper = unwrapper ? unwrapper : defaultUnwrapper
-    handler = handler ? handler : narrowReturnType
+    // unwrapper = unwrapper ? unwrapper : defaultUnwrapper
+    // handler = handler ? handler : narrowReturnType
 
-    const service = new WebviewService(handler, unwrapper)
+    // const service = new WebviewService(handler, unwrapper)
+    const service = new WebviewService()
     useEffect(() => {
 
         return () => {
@@ -157,11 +162,11 @@ export function useWebviewService(handler?: (content: Return) => any, unwrapper?
 /**
  * Wraps the useState hook in order to resolve concurrency issues when changing state based on calls to the rust backend
  */
-export function useBoxedState<S>(initialState: S | (() => S)): [{value: S}, (value: S | ((prevState: S) => S)) => void] {
+export const useBoxedState = <S>(initialState: S | (() => S)): [{value: S}, (value: S | ((prevState: S) => S)) => void] => {
     const [internalState, setInternalState] = useState(initialState)
     const box = { value: internalState }
 
-    function setExternalState (value: S | ((prevState: S) => S)) {
+    const setExternalState = (value: S | ((prevState: S) => S)) => {
         // if(value instanceof Function) {
         //     box.value = value(box.value);
         // } else {

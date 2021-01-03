@@ -13,7 +13,7 @@
 .empty-tile {
 }
 
-.legal-move {
+.show-possible-move {
     background-color: greenyellow;
 }
 
