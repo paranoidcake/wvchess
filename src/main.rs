@@ -35,8 +35,8 @@ fn main() {
                             let board_guard = board_clone.lock().unwrap();
 
                             match &request {
-                                Open { path } => lib::fs::open(path),
-                                OpenDir { path, include_extensions } => lib::fs::open_dir(path, include_extensions),
+                                Open { path } => lib::fs::open(&path),
+                                OpenDir { path, include_extensions } => lib::fs::open_dir(&path, &include_extensions),
                                 Echo { text } => {
                                     Some(Ok(types::webview::Return::Echo { text: text.to_string() }))
                                 },
